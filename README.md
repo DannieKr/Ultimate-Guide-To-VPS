@@ -211,7 +211,7 @@ sudo ufw enable
 sudo ufw status
 ```
 
-### Install Docker (Advanced users only, and you are interested in docker / want to use it)
+### Install Docker (Advanced users only, and you are interested in docker / want to use it) 
 #### What is Docker?
 Docker is a set of platform as a service (PaaS) 
 products that use OS-level virtualization to deliver software in packages called containers.
