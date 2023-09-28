@@ -340,7 +340,49 @@ services:
 * Click on `Deploy the stack`.
 * Add firewall rules:
 ```bash
+sudo ufw route allow proto tcp from any to any port 80
 sudo ufw route allow proto tcp from any to any port 81
 sudo ufw route allow proto tcp from any to any port 443
 ```
 * Now you can access nginx proxy manager with your browser at `https://<IP>:81`.
+
+#### Configure nginx proxy manager and portainer
+* Open nginx proxy manager with your browser at `https://<IP>:81`.
+* Click on `Proxy Hosts` and then on `Add Proxy Host`.
+* Enter the following values for portainer proxy host:
+```bash
+Details
+  Domain Names: portainer.<your domain>
+  Scheme: https
+  Forward Hostname / IP: IP Address of portainer in portainer (navigate to containers -> portainer -> inspect -> ip address)
+  Forward Port: 9443
+SSL
+  SSL Certificate: Request a new SSL Certificate
+  Force SSL: yes
+```
+* Click on `Save`.
+* Now you can access portainer with your browser at `https://portainer.<your domain>`.
+* Click on `Proxy Hosts` and then on `Add Proxy Host`.
+* Enter the following values for nginx proxy manager proxy host:
+```bash
+Details
+  Domain Names: npm.<your domain>
+  Scheme: https
+  Forward Hostname / IP: IP Address of nginx proxy manager in portainer (navigate to containers -> nginx proxy manager -> inspect -> ip address)
+  Forward Port: 81
+SSL
+  SSL Certificate: Request a new SSL Certificate
+  Force SSL: yes
+```
+* Click on `Save`.
+* Now you can access nginx proxy manager with your browser at `https://npm.<your domain>`.
+* Because we now access portainer and nginx proxy manager through the reverse proxy, we don't need the firewall rules anymore:
+* List all firewall rules:
+```bash
+sudo ufw status numbered
+```
+* Delete the firewall rules:
+```bash
+sudo ufw delete <number>
+```
+* Remove the rule for 81, 9443
