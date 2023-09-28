@@ -4,6 +4,15 @@ How to set up a VPS (virtual private server) from 0 to 100, resources and notes 
 The goal of this guide is to help you to set up a VPS from 0 to 100,
 with all the necessary tools to self-host services such as a website, mail server,
 file server, git server, database server, game server, chat server and more.
+
+## What is a VPS?
+A virtual private server (VPS) is a virtual machine sold as a service by a hosting provider.
+A VPS runs its own copy of an operating system (OS), and users have root access to that operating system instance,
+so they can install almost any software that runs on that OS.
+They are priced much lower than an equivalent physical server, 
+but as they share the underlying physical hardware with other VPSs,
+performance may be lower, and may depend on the workload of other instances on the same hardware node.
+
 # Table of Contents
 - [Ultimate Guide To VPS](#ultimate-guide-to-vps)
 - [Introduction](#introduction)
@@ -72,3 +81,135 @@ Keep in mind that you should never share your private key with anyone in this ex
 Only share your public key `vps_rsa.pub`.
 
 Now you can upload your public key to your provider.
+
+#### SSH config
+SSH config is a nice way to save your SSH settings on your local machine.
+It is located in `C:\Users\Name\.ssh\config`.
+* Open the file with your favorite text editor.
+* Add the following lines:
+```bash
+Host Name
+    HostName IP
+    Port 22
+    User root
+    IdentityFile C:\Users\Name\.ssh\vps_rsa
+```
+* Replace the values if necessary.
+* Save the file and exit the text editor.
+* Now you can open your terminal and connect to your VPS with:
+```bash
+ssh <Name>
+```
+
+### Create a new user
+It is not recommended to use the root user for everything, so we will create a new user.
+Later we will also remove the option to login as root, to increase security.
+* Create a new user:
+```bash
+adduser <Name>
+```
+* Choose and enter a password for your new user.
+* You will be asked to enter some information about your new user. You can just press enter to skip them.
+* Verify that your information is correct by typing `Y` and pressing enter.
+* Add your new user to the sudo group:
+```bash
+usermod -aG sudo <Name>
+```
+* Switch to your new user:
+```bash
+su <Name>
+```
+* Navigate to your home directory:
+```bash
+cd ~
+```
+* Create a new directory called `.ssh`:
+```bash
+mkdir .ssh
+```
+* Navigate to your new directory:
+```bash
+cd .ssh
+```
+* Create a new file called `authorized_keys`:
+```bash
+touch authorized_keys
+```
+* Open the file with your favorite text editor and paste your public key into it.
+* Save the file and exit the text editor.
+* Set the correct permissions for the file:
+```bash
+chmod 600 authorized_keys
+```
+* Navigate back to your home directory:
+```bash
+cd ~
+```
+* Open the file `/etc/ssh/sshd_config` with your favorite text editor:
+```bash
+sudo nano /etc/ssh/sshd_config
+```
+* Find the line `PermitRootLogin yes` and change it to `PermitRootLogin no`.
+* Find the line `PasswordAuthentication yes` and change it to `PasswordAuthentication no`.
+* Save the file and exit the text editor.
+* Restart the SSH service:
+```bash
+sudo service ssh restart
+```
+* Now you have to adjust your SSH config of your local machine:
+```bash
+Host Name
+    HostName IP
+    Port 22
+    User <Name>
+    IdentityFile C:\Users\Name\.ssh\vps_rsa
+```
+* Now you should only be able to log in with your new user.
+* You can test it by opening your terminal and connecting to your VPS with:
+```bash
+ssh <Name>
+```
+
+### Additional Security
+#### SSH
+* Open the file `/etc/ssh/sshd_config` with your favorite text editor:
+```bash
+sudo nano /etc/ssh/sshd_config
+```
+* Find the line `Port 22` and change it to a custom port.
+* With `Port 22` you are using the default port, so it is easier for attackers to find your server. Even though it is not a big deal, because you are using an SSH key, I still recommend you to change it.
+* Save the file and exit the text editor.
+* Restart the SSH service:
+```bash
+sudo service ssh restart
+```
+* Now you have to adjust your SSH config of your local machine:
+```bash
+Host Name
+    HostName IP
+    Port <Port>
+    User <Name>
+    IdentityFile C:\Users\Name\.ssh\vps_rsa
+```
+* Now you should only be able to log in with your custom port.
+
+#### Firewall (not final yet)
+* Install `ufw`:
+```bash
+sudo apt install ufw
+```
+* Allow your custom SSH port:
+```bash
+sudo ufw allow <Port>/tcp
+```
+* Enable `ufw`:
+```bash
+sudo ufw enable
+```
+* Check the status of `ufw`:
+```bash
+sudo ufw status
+```
+
+### Install Docker
+#### What is Docker?
