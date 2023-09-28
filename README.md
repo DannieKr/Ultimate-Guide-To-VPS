@@ -314,3 +314,33 @@ sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -
 sudo ufw route allow proto tcp from any to any port 9443
 ```
 * Now you can access portainer with your browser at `https://<IP>:9443`.
+
+### Install nginx proxy manager (not final yet, skip for now)
+#### What is nginx proxy manager?
+We use nginx proxy manager to manage our reverse proxies and SSL certificates.
+
+#### Install nginx proxy manager
+* Create a new stack in portainer.
+* [here](https://nginxproxymanager.com/guide/#quick-setup). you can find the official Quick Setup if the following is outdated.
+* Paste the following code into the `Web editor`:
+```bash
+version: '3.8'
+services:
+  app:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '81:81'
+      - '443:443'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+```
+* Click on `Deploy the stack`.
+* Add firewall rules:
+```bash
+sudo ufw route allow proto tcp from any to any port 81
+sudo ufw route allow proto tcp from any to any port 443
+```
+* Now you can access nginx proxy manager with your browser at `https://<IP>:81`.
