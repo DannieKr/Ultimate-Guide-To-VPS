@@ -211,5 +211,106 @@ sudo ufw enable
 sudo ufw status
 ```
 
-### Install Docker
+### Install Docker (Advanced users only, and you are interested in docker / want to use it)
 #### What is Docker?
+Docker is a set of platform as a service (PaaS) 
+products that use OS-level virtualization to deliver software in packages called containers.
+Containers are isolated from one another and bundle their own software, libraries, and configuration files;
+they can communicate with each other through well-defined channels.
+Containers are created from images that specify their contents.
+Images downloaded from public repositories.
+
+TLDR: It is a way to run applications in a container, so you don't have to install them on your host system.
+
+#### Install Docker
+You probably should use the official Docker installation guide, because it is always up-to-date. 
+You can find it [here](https://docs.docker.com/engine/install/). 
+But I will also show you which commands I used to install Docker.
+* Set up Docker's Apt repository.
+```bash
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+```
+* Install Docker Engine:
+```bash
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+* Verify that Docker Engine is installed correctly by running the `hello-world` image:
+```bash
+sudo docker run hello-world
+```
+
+### UFW configuration for Docker
+Due to the way Docker manipulates iptables on Linux, you have to make some changes to your firewall configuration. 
+If you want to read more about it, you can find some information [here](https://github.com/chaifeng/ufw-docker).
+* Modify the UFW configuration file /etc/ufw/after.rules and add the following rules at the end of the file:
+```bash
+# BEGIN UFW AND DOCKER
+*filter
+:ufw-user-forward - [0:0]
+:ufw-docker-logging-deny - [0:0]
+:DOCKER-USER - [0:0]
+-A DOCKER-USER -j ufw-user-forward
+
+-A DOCKER-USER -j RETURN -s 10.0.0.0/8
+-A DOCKER-USER -j RETURN -s 172.16.0.0/12
+-A DOCKER-USER -j RETURN -s 192.168.0.0/16
+
+-A DOCKER-USER -p udp -m udp --sport 53 --dport 1024:65535 -j RETURN
+
+-A DOCKER-USER -j ufw-docker-logging-deny -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -d 192.168.0.0/16
+-A DOCKER-USER -j ufw-docker-logging-deny -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -d 10.0.0.0/8
+-A DOCKER-USER -j ufw-docker-logging-deny -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -d 172.16.0.0/12
+-A DOCKER-USER -j ufw-docker-logging-deny -p udp -m udp --dport 0:32767 -d 192.168.0.0/16
+-A DOCKER-USER -j ufw-docker-logging-deny -p udp -m udp --dport 0:32767 -d 10.0.0.0/8
+-A DOCKER-USER -j ufw-docker-logging-deny -p udp -m udp --dport 0:32767 -d 172.16.0.0/12
+
+-A DOCKER-USER -j RETURN
+
+-A ufw-docker-logging-deny -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW DOCKER BLOCK] "
+-A ufw-docker-logging-deny -j DROP
+
+COMMIT
+# END UFW AND DOCKER
+```
+* Restart UFW:
+```bash
+sudo service ufw restart
+```
+
+
+### Install portainer
+#### What is portainer?
+Portainer is an open-source lightweight management UI that allows you to easily manage your Docker environments.
+
+TLDR: It is a nice UI to manage your Docker containers.
+
+#### Install portainer
+You probably should use the official portainer installation guide, because it is always up-to-date.
+You can find it [here](https://docs.portainer.io/start/install-ce/server/docker/linux/).
+But I will also show you which commands I used to install portainer.
+* First, create the volume that Portainer Server will use to store its database:
+* Create the volume:
+```bash
+sudo docker volume create portainer_data
+```
+* Then, download and install the Portainer Server container:
+```bash 
+sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
+```
+* Add firewall rules:
+```bash
+sudo ufw route allow proto tcp from any to any port 9443
+```
+* Now you can access portainer with your browser at `https://<IP>:9443`.
