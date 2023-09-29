@@ -193,7 +193,7 @@ Host Name
 ```
 * Now you should only be able to log in with your custom port.
 
-#### Firewall (not final yet)
+#### Firewall (not final yet, skip for now)
 * Install `ufw`:
 ```bash
 sudo apt install ufw
