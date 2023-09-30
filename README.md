@@ -223,9 +223,12 @@ Images downloaded from public repositories.
 TLDR: It is a way to run applications in a container, so you don't have to install them on your host system.
 
 #### Install Docker
-You probably should use the official Docker installation guide, because it is always up-to-date. 
-You can find it [here](https://docs.docker.com/engine/install/). 
-But I will also show you which commands I used to install Docker.
+The best way to install Docker is
+to use the official Docker documentation you can find the documentation [here](https://docs.docker.com/engine/install/).
+<details>
+<summary>If you want to use my commands, that I used to install Docker, you can expand this section. 
+</summary>
+
 * Set up Docker's Apt repository.
 ```bash
 # Add Docker's official GPG key:
@@ -237,9 +240,9 @@ sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
 # Add the repository to Apt sources:
 echo \
-  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
-  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+"deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+"$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 ```
 * Install Docker Engine:
@@ -250,6 +253,8 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 ```bash
 sudo docker run hello-world
 ```
+
+</details>
 
 ### UFW configuration for Docker
 Due to the way Docker manipulates iptables on Linux, you have to make some changes to your firewall configuration. 
@@ -297,15 +302,20 @@ Portainer is an open-source lightweight management UI that allows you to easily 
 TLDR: It is a nice UI to manage your Docker containers.
 
 #### Install portainer
-You probably should use the official portainer installation guide, because it is always up-to-date.
-You can find it [here](https://docs.portainer.io/start/install-ce/server/docker/linux/).
-But I will also show you which commands I used to install portainer.
-* First, create the volume that Portainer Server will use to store its database:
+The best way to install portainer is to use the official portainer documentation
+you can find the documentation [here](https://docs.portainer.io/start/install-ce/server/docker/linux/).
+
+<details>
+<summary>
+If you want to use my commands, that I used to install portainer, you can expand this section.
+</summary>
+
+* First, create the volume that Portainer will use to store its database:
 * Create the volume:
 ```bash
 sudo docker volume create portainer_data
 ```
-* Then, download and install the Portainer Server container:
+* Then, download and install the Portainer container:
 ```bash 
 sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
 ```
@@ -315,13 +325,21 @@ sudo ufw route allow proto tcp from any to any port 9443
 ```
 * Now you can access portainer with your browser at `https://<IP>:9443`.
 
+</details>
+
 ### Install nginx proxy manager (not final yet, skip for now)
 #### What is nginx proxy manager?
 We use nginx proxy manager to manage our reverse proxies and SSL certificates.
 
 #### Install nginx proxy manager
+Follow the official Quick Setup [here](https://nginxproxymanager.com/guide/#quick-setup), it should be up to date.
+
+<details>
+<summary>
+If you want to use my commands, that I used to install nginx proxy manager, you can expand this section.
+</summary>
+
 * Create a new stack in portainer.
-* [here](https://nginxproxymanager.com/guide/#quick-setup). you can find the official Quick Setup if the following is outdated.
 * Paste the following code into the `Web editor`:
 ```bash
 version: '3.8'
@@ -338,7 +356,10 @@ services:
       - ./letsencrypt:/etc/letsencrypt
 ```
 * Click on `Deploy the stack`.
-* Add firewall rules:
+* Wait until the stack is deployed.
+</details>
+
+* After the stack is deployed, you have to add some firewall rules:
 ```bash
 sudo ufw route allow proto tcp from any to any port 80
 sudo ufw route allow proto tcp from any to any port 81
