@@ -258,7 +258,8 @@ sudo docker run hello-world
 
 ### UFW configuration for Docker
 Due to the way Docker manipulates iptables on Linux, you have to make some changes to your firewall configuration. 
-If you want to read more about it, you can find some information [here](https://github.com/chaifeng/ufw-docker).
+If you want to read more about this problem,
+you can find some more information [here](https://github.com/chaifeng/ufw-docker).
 * Modify the UFW configuration file /etc/ufw/after.rules and add the following rules at the end of the file:
 ```bash
 # BEGIN UFW AND DOCKER
