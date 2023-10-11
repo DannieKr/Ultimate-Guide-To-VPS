@@ -408,3 +408,41 @@ sudo ufw status numbered
 sudo ufw delete <number>
 ```
 * Remove the rule for 81, 9443
+
+### Minecraft Server (not final yet, skip for now)
+<details>
+<summary>
+Minecraft Docker Compose
+</summary>
+
+```bash
+version: "3.9"
+
+services:
+  minecraft:
+    container_name: valhelsia
+    hostname: valhelsia
+    image: itzg/minecraft-server
+    volumes:
+    - /opt/valhelsia/modpacks:/modpacks:ro
+    - /opt/valhelsia/data:/data
+    - /mnt:/mnt
+    environment:
+    - EULA=TRUE
+    - TYPE=AUTO_CURSEFORGE
+    - CF_SLUG=valhelsia-5
+    - CF_FILE_ID=modpack id
+    - CF_API_KEY=api key
+    - TZ=Europe/Berlin
+    - MEMORY=4G
+    - ENABLE_RCON=true
+    - RCON_PASSWORD=secret
+    - RCON_PORT=25575
+    ports:
+      - 25565:25565
+      - 25575:25575
+    restart: unless-stopped
+```
+
+
+</details>
