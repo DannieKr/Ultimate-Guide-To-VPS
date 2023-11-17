@@ -40,7 +40,7 @@ because they are the most beginner-friendly distributions.
 I'll use Debian 12 in this guide.
 In general, all providers offer a pre-installed Linux distribution,
 so you don't have
-to install it yourself you just have to choose the OS you want to use and the provider will install it for you.
+to install it yourself you have to choose the OS you want to use and the provider will install it for you.
 
 ### SSH
 #### What is SSH?
@@ -50,6 +50,14 @@ It is used for remote login to a computer and to execute commands on a remote ma
 You can read more about SSH [here](https://en.wikipedia.org/wiki/Secure_Shell).
 
 TLDR: It is a way to connect to a remote machine and execute commands on it. That's how you will interact with your VPS.
+
+#### Getting started
+There are two types, how providers give you access to your VPS:
+1. You get a password, and you have to change it on your first login
+2. You have to upload a public SSH key to your provider, and you can only connect with your private SSH key
+
+If you get a password, you can skip the following sections and go to [Create a new user](#create-a-new-user), but
+you will have to return to this section later to [Generate an SSH Key](#generate-an-ssh-key).
 
 #### What is an SSH Key?
 An SSH key is a pair of cryptographic keys
@@ -446,3 +454,46 @@ services:
 
 
 </details>
+
+
+### Set up a TeamSpeak 3 Server with Docker Compose
+* create a folder in your home directory called `teamspeak3`
+```bash
+mkdir teamspeak3
+```
+* navigate to your new folder
+```bash
+cd teamspeak3
+```
+* create a docker-compose.yml file
+```bash
+nano docker-compose.yml
+```
+* paste the following code into the file
+```bash
+version: '3'
+services:
+  teamspeak:
+    image: teamspeak:latest
+    environment:
+      TS3SERVER_LICENSE: accept
+    ports:
+      - "9987:9987/udp"
+      - "10011:10011"
+      - "30033:30033"
+    volumes:
+      - ./ts3_data:/var/ts3server/
+    restart: always
+```
+* save the file and exit the text editor
+* start the container
+```bash
+docker-compose up
+```
+* now you can connect to your teamspeak server with your teamspeak client at `IP:9987`
+* use the admin token to get admin permissions, you can find it in the terminal output
+* after you have used the admin token, you can stop the container with `CTRL + C`
+* now you can start the container in the background
+```bash
+docker-compose up -d
+```
