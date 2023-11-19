@@ -14,11 +14,34 @@ but as they share the underlying physical hardware with other VPSs,
 performance may be lower, and may depend on the workload of other instances on the same hardware node.
 
 # Table of Contents
-- [Ultimate Guide To VPS](#ultimate-guide-to-vps)
 - [Introduction](#introduction)
-- [Table of Contents](#table-of-contents)
+  - [What is a VPS?](#what-is-a-vps)
 - [VPS Providers](#vps-providers)
 - [VPS Setup](#vps-setup)
+  - [Initial Setup](#initial-setup)
+    - [Operating System](#operating-system)
+    - [SSH](#ssh)
+      - [What is SSH?](#what-is-ssh)
+      - [Getting started](#getting-started)
+      - [What is an SSH Key?](#what-is-an-ssh-key)
+      - [Generate an SSH Key](#generate-an-ssh-key)
+      - [SSH config](#ssh-config)
+    - [Create a new user](#create-a-new-user)
+    - [Additional Security](#additional-security)
+      - [SSH](#ssh-1)
+      - [WireGuard](#wireguard)
+      - [Firewall](#firewall)
+    - [Install Docker](#install-docker)
+    - [UFW configuration for Docker](#ufw-configuration-for-docker)
+    - [Set up a TeamSpeak 3 Server with Docker Compose](#set-up-a-teamspeak-3-server-with-docker-compose)
+    - [Install portainer (skip for now, this section is not final yet)](#install-portainer-skip-for-now-this-section-is-not-final-yet)
+      - [What is portainer?](#what-is-portainer)
+      - [Install portainer](#install-portainer)
+    - [Install nginx proxy manager (skip for now, this section is not final yet)](#install-nginx-proxy-manager-skip-for-now-this-section-is-not-final-yet)
+      - [What is nginx proxy manager?](#what-is-nginx-proxy-manager)
+      - [Install nginx proxy manager](#install-nginx-proxy-manager)
+      - [Configure nginx proxy manager and portainer](#configure-nginx-proxy-manager-and-portainer)
+    - [Minecraft Server (skip for now, this section is not final yet)](#minecraft-server-skip-for-now-this-section-is-not-final-yet)
 
 # VPS Providers
 Disclaimer: I'm from Germany, it could be possible that some providers are not available in your country.
@@ -201,7 +224,28 @@ Host Name
 ```
 * Now you should only be able to log in with your custom port.
 
-#### Firewall (not final yet, skip for now)
+#### WireGuard
+##### What is WireGuard?
+WireGuard is an application and communication protocol
+that implements virtual private network (VPN)
+techniques to create secure point-to-point connections.
+We will use it to access services that we don't want to expose to the internet.
+
+I like to install WireGuard with the following script, because it is easy to use.
+You can find the script [here](https://github.com/angristan/wireguard-install#usage).
+
+
+#### Firewall
+##### What is a firewall?
+A firewall is a crucial component of network security. 
+UFW (Uncomplicated Firewall) helps protect your system from unauthorized access, 
+controlling both incoming and outgoing network traffic based on your rules.
+You want some services to be accessible from the internet,
+but some services should only be accessible from a local network or not accessible at all.
+For example, you can emulate a local network with a VPN, so you can access your services from anywhere.
+That's why we have set up WireGuard previously.
+
+
 * Install `ufw`:
 ```bash
 sudo apt install ufw
@@ -219,7 +263,7 @@ sudo ufw enable
 sudo ufw status
 ```
 
-### Install Docker (Advanced users only, and you are interested in docker / want to use it) 
+### Install Docker 
 #### What is Docker?
 Docker is a set of platform as a service (PaaS) 
 products that use OS-level virtualization to deliver software in packages called containers.
@@ -228,41 +272,11 @@ they can communicate with each other through well-defined channels.
 Containers are created from images that specify their contents.
 Images downloaded from public repositories.
 
-TLDR: It is a way to run applications in a container, so you don't have to install them on your host system.
+TLDR: It is a way to run applications in a container, so you don't have to install them on your host system, I use it to run my services.
 
 #### Install Docker
 The best way to install Docker is
 to use the official Docker documentation you can find the documentation [here](https://docs.docker.com/engine/install/).
-<details>
-<summary>If you want to use my commands, that I used to install Docker, you can expand this section. 
-</summary>
-
-* Set up Docker's Apt repository.
-```bash
-# Add Docker's official GPG key:
-sudo apt-get update
-sudo apt-get install ca-certificates curl gnupg
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-# Add the repository to Apt sources:
-echo \
-"deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
-"$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update
-```
-* Install Docker Engine:
-```bash
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-```
-* Verify that Docker Engine is installed correctly by running the `hello-world` image:
-```bash
-sudo docker run hello-world
-```
-
-</details>
 
 ### UFW configuration for Docker
 Due to the way Docker manipulates iptables on Linux, you have to make some changes to your firewall configuration. 
@@ -303,8 +317,60 @@ COMMIT
 sudo service ufw restart
 ```
 
+### Set up a TeamSpeak 3 Server with Docker Compose
+* create a folder in your home directory called `teamspeak3`
+```bash
+mkdir teamspeak3
+```
+* navigate to your new folder
+```bash
+cd teamspeak3
+```
+* create a docker-compose.yml file
+```bash
+nano docker-compose.yml
+```
+* paste the following code into the file
+```bash
+version: '3'
+services:
+  teamspeak:
+    image: teamspeak:latest
+    environment:
+      TS3SERVER_LICENSE: accept
+    ports:
+      - "9987:9987/udp"
+      - "10011:10011"
+      - "30033:30033"
+    volumes:
+      - ./ts3_data:/var/ts3server/
+    restart: always
+```
+* save the file and exit the text editor
+* add new firewall rules for the teamspeak server
+```bash
+sudo ufw route allow proto udp from any to any port 9987
+```
+```bash
+sudo ufw route allow proto tcp from any to any port 30033
+```
+* restart the firewall
+```bash
+sudo service ufw restart
+```
+* start the container
+```bash
+docker-compose up
+```
+* now you can connect to your teamspeak server with your teamspeak client at `IP:9987`
+* use the admin token to get admin permissions, you can find it in the terminal output
+* after you have used the admin token, you can stop the container with `CTRL + C`
+* now you can start the container in the background
+```bash
+docker-compose up -d
+```
 
-### Install portainer
+### Install portainer (skip for now, this section is not final yet)
 #### What is portainer?
 Portainer is an open-source lightweight management UI that allows you to easily manage your Docker environments.
 
@@ -336,7 +402,7 @@ sudo ufw route allow proto tcp from any to any port 9443
 
 </details>
 
-### Install nginx proxy manager (not final yet, skip for now)
+### Install nginx proxy manager (skip for now, this section is not final yet)
 #### What is nginx proxy manager?
 We use nginx proxy manager to manage our reverse proxies and SSL certificates.
 
@@ -417,7 +483,7 @@ sudo ufw delete <number>
 ```
 * Remove the rule for 81, 9443
 
-### Minecraft Server (not final yet, skip for now)
+### Minecraft Server (skip for now, this section is not final yet)
 <details>
 <summary>
 Minecraft Docker Compose
@@ -454,46 +520,3 @@ services:
 
 
 </details>
-
-
-### Set up a TeamSpeak 3 Server with Docker Compose
-* create a folder in your home directory called `teamspeak3`
-```bash
-mkdir teamspeak3
-```
-* navigate to your new folder
-```bash
-cd teamspeak3
-```
-* create a docker-compose.yml file
-```bash
-nano docker-compose.yml
-```
-* paste the following code into the file
-```bash
-version: '3'
-services:
-  teamspeak:
-    image: teamspeak:latest
-    environment:
-      TS3SERVER_LICENSE: accept
-    ports:
-      - "9987:9987/udp"
-      - "10011:10011"
-      - "30033:30033"
-    volumes:
-      - ./ts3_data:/var/ts3server/
-    restart: always
-```
-* save the file and exit the text editor
-* start the container
-```bash
-docker-compose up
-```
-* now you can connect to your teamspeak server with your teamspeak client at `IP:9987`
-* use the admin token to get admin permissions, you can find it in the terminal output
-* after you have used the admin token, you can stop the container with `CTRL + C`
-* now you can start the container in the background
-```bash
-docker-compose up -d
-```
