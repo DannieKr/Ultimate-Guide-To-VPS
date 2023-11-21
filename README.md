@@ -180,8 +180,9 @@ cd ~
 ```bash
 sudo nano /etc/ssh/sshd_config
 ```
-* Find the line `PermitRootLogin yes` and change it to `PermitRootLogin no`.
-* Find the line `PasswordAuthentication yes` and change it to `PasswordAuthentication no`.
+* Find the line `PermitRootLogin yes` uncomment it and change it to `PermitRootLogin no`.
+* Find the line `PasswordAuthentication yes` uncomment it and change it to `PasswordAuthentication no`.
+* Add `PubkeyAuthentication yes` to the file.
 * Save the file and exit the text editor.
 * Restart the SSH service:
 ```bash
@@ -207,7 +208,7 @@ ssh <Name>
 ```bash
 sudo nano /etc/ssh/sshd_config
 ```
-* Find the line `Port 22` and change it to a custom port.
+* Find the line `Port 22` uncomment it and change it to a custom port.
 * With `Port 22` you are using the default port, so it is easier for attackers to find your server. Even though it is not a big deal, because you are using an SSH key, I still recommend you to change it.
 * Save the file and exit the text editor.
 * Restart the SSH service:
