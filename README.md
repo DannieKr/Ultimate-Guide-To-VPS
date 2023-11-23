@@ -327,40 +327,81 @@ to use the official Docker documentation you can find the documentation [here](h
 Due to the way Docker manipulates iptables on Linux, you have to make some changes to your firewall configuration. 
 If you want to read more about this problem,
 you can find some more information [here](https://github.com/chaifeng/ufw-docker).
-* Modify the UFW configuration file /etc/ufw/after.rules and add the following rules at the end of the file:
+I like to use the ufw-docker util tool, you can find it in the same [repository](https://github.com/chaifeng/ufw-docker#ufw-docker-util).
+* Download ufw-docker util tool
 ```bash
-# BEGIN UFW AND DOCKER
-*filter
-:ufw-user-forward - [0:0]
-:ufw-docker-logging-deny - [0:0]
-:DOCKER-USER - [0:0]
--A DOCKER-USER -j ufw-user-forward
-
--A DOCKER-USER -j RETURN -s 10.0.0.0/8
--A DOCKER-USER -j RETURN -s 172.16.0.0/12
--A DOCKER-USER -j RETURN -s 192.168.0.0/16
-
--A DOCKER-USER -p udp -m udp --sport 53 --dport 1024:65535 -j RETURN
-
--A DOCKER-USER -j ufw-docker-logging-deny -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -d 192.168.0.0/16
--A DOCKER-USER -j ufw-docker-logging-deny -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -d 10.0.0.0/8
--A DOCKER-USER -j ufw-docker-logging-deny -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -d 172.16.0.0/12
--A DOCKER-USER -j ufw-docker-logging-deny -p udp -m udp --dport 0:32767 -d 192.168.0.0/16
--A DOCKER-USER -j ufw-docker-logging-deny -p udp -m udp --dport 0:32767 -d 10.0.0.0/8
--A DOCKER-USER -j ufw-docker-logging-deny -p udp -m udp --dport 0:32767 -d 172.16.0.0/12
-
--A DOCKER-USER -j RETURN
-
--A ufw-docker-logging-deny -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW DOCKER BLOCK] "
--A ufw-docker-logging-deny -j DROP
-
-COMMIT
-# END UFW AND DOCKER
+sudo wget -O /usr/local/bin/ufw-docker \
+  https://github.com/chaifeng/ufw-docker/raw/master/ufw-docker
+sudo chmod +x /usr/local/bin/ufw-docker
 ```
-* Restart UFW:
+* Install ufw-docker
 ```bash
-sudo service ufw restart
+ufw-docker install
 ```
+[Here](https://github.com/chaifeng/ufw-docker#ufw-docker-util) you can find out how to use it, we will use it later to allow access from the internet to our containers.
+
+### Script to update ufw rules after reboot
+ufw-docker uses the current ip address of the container, so we have to update the firewall rules after a reboot,
+because the ip addresses of the containers can change otherwise the firewall rules won't work anymore, and we
+can't access our services from the internet anymore.
+
+For example, if you want to add a new firewall rule for a container, you have to use the following command:
+```bash
+sudo ufw-docker allow <Container Name>
+```
+Then the ufw-docker util tool will look up the ip address of the container and add a new firewall rule for it.
+But since the ip address of the container can change after a reboot,
+we have to update the firewall rules every time we reboot our server.
+To automate this process, we will use a script that will update the firewall rules after a reboot.
+* Create a new file called `update-ufw-rules.sh` in your home directory
+```bash
+nano update-ufw-rules.sh
+```
+* Paste the following code into the file
+```bash
+#!/bin/bash
+
+# Sleep for 30 seconds to give Docker time to start
+sleep 30
+
+# Full path to the ufw-docker command
+UFW_DOCKER_CMD="/usr/local/bin/ufw-docker"
+
+# Array of container names
+CONTAINERS=("container-1" "container-2")
+
+# Loop through each container and update UFW rules
+for CONTAINER in "${CONTAINERS[@]}"; do
+    echo "Updating UFW rules for $CONTAINER..."
+
+    # Delete existing UFW rule for the container
+    $UFW_DOCKER_CMD delete allow $CONTAINER
+
+    # Add a new UFW rule for the container
+    $UFW_DOCKER_CMD allow $CONTAINER
+
+    echo "UFW rules updated for $CONTAINER."
+done
+
+echo "All UFW rules have been updated."
+```
+* Save the file and exit the text editor
+* Make the file executable
+```bash
+chmod +x update-ufw-rules.sh
+```
+* Add the script to the crontab
+```bash
+sudo crontab -e
+```
+* Add the following line to the crontab
+```bash
+@reboot /home/<name>/update-ufw-rules.sh
+```
+* Save the file and exit the text editor
+* Now the script will run every time you reboot your server
+* Remember to add your containers to the container array in the script
+
 
 ### Set up a TeamSpeak 3 Server with Docker Compose
 * create a folder in your home directory called `teamspeak3`
@@ -392,28 +433,20 @@ services:
     restart: always
 ```
 * save the file and exit the text editor
-* add new firewall rules for the teamspeak server
-```bash
-sudo ufw route allow proto udp from any to any port 9987
-```
-```bash
-sudo ufw route allow proto tcp from any to any port 30033
-```
-* restart the firewall
-```bash
-sudo service ufw restart
-```
 * start the container
-```bash
-docker-compose up
-```
-* now you can connect to your teamspeak server with your teamspeak client at `IP:9987`
-* use the admin token to get admin permissions, you can find it in the terminal output
-* after you have used the admin token, you can stop the container with `CTRL + C`
-* now you can start the container in the background
 ```bash
 docker-compose up -d
 ```
+* get the teamspeak docker container name
+```bash
+docker ps
+```
+* use the ufw-docker util tool to add a new firewall rule for the teamspeak container
+```bash
+sudo ufw-docker allow <Container Name>
+```
+* Don't forget to update the update-ufw-rules.sh script as well
+* now you can connect to your teamspeak server with your teamspeak client at `IP:9987`
 
 ### Install portainer (skip for now, this section is not final yet)
 #### What is portainer?
