@@ -293,6 +293,8 @@ TLDR: It is a way to run applications in a container, so you don't have to insta
 The best way to install Docker is
 to use the official Docker documentation you can find the documentation [here](https://docs.docker.com/engine/install/).
 
+For Debian 12 you find the documentation [here](https://docs.docker.com/engine/install/debian/).
+
 ### UFW configuration for Docker
 Due to the way Docker manipulates iptables on Linux, you have to make some changes to your firewall configuration. 
 If you want to read more about this problem,
