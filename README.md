@@ -234,50 +234,20 @@ We will use it to access services that we don't want to expose to the internet.
 
 ##### Install WireGuard
 I like to install WireGuard with the following script, because it is easy to use.
-You can find the script [here](https://github.com/angristan/wireguard-install#usage).
+You can find the script [here](https://github.com/Nyr/wireguard-install?tab=readme-ov-file).
 
-##### WireGuard configuration problems
-I encountered some problems with my WireGuard installation, so I will list them here.
+```bash
+wget https://git.io/wireguard -O wireguard-install.sh
+```
 
-After the installation of WireGuard the resolvconf package was not fully installed ```apt upgrade``` gave me following error:
 ```bash
-Setting up resolvconf (1.91+nmu1) ...
-resolvconf.postinst: Error: Cannot replace the current /etc/resolv.conf with a symbolic link because it is immutable; to correct this problem, gain root privileges in a terminal and run 'chattr -i /etc/resolv.conf' and then 'dpkg --config
-ure resolvconf'; aborting
-dpkg: error processing package resolvconf (--configure):
- installed resolvconf package post-installation script subprocess returned error exit status 1
-Errors were encountered while processing:
- resolvconf
-E: Sub-process /usr/bin/dpkg returned an error code (1)
+sudo bash wireguard-install.sh
 ```
-And I couldn't resolve any domains anymore:
+
+After the installation, you find your wireguard config, that you can use to connect to your server, in the /root/username.conf file.
+
 ```bash
-ping google.com temporary failure in name resolution
-```
-I could fix it with the recommended commands:
-```bash
-sudo chattr -i /etc/resolv.conf
-```
-```bash
-sudo dpkg --configure resolvconf
-```
-But after a system reboot, my DNS couldn't resolve domains anymore. 
-A temporary fix was to add nameservers to the file `/etc/resolv.conf`
-```bash
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-```
-For a permanent fix, I had to install systemd-resolved, which my Debian 12 minimal installation was missing.
-```bash
-sudo apt install systemd-resolved
-```
-After the installation, I had to edit the file `/etc/systemd/resolved.conf`
-```bash
-sudo nano /etc/systemd/resolved.conf
-```
-I had to uncomment the line `DNS=`, and add my nameservers
-```bash
-DNS=1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com 2606:4700:4700::1111#cloudflare-dns.com 2606:4700:4700::1001#cloudflare-dns.com
+sudo mv /root/username.conf /home/user/
 ```
 
 #### Firewall
