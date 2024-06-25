@@ -99,7 +99,7 @@ wget https://wordpress.org/latest.zip
 unzip latest.zip
 ```
 ```bash
-sudo cp -R /wordpress/* /var/www/html
+sudo cp -R wordpress/* /var/www/html
 ```
 ```bash
 sudo rm latest.zip && sudo rm -r wordpress

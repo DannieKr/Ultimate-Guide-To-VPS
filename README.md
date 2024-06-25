@@ -252,6 +252,63 @@ sudo mv /root/username.conf /home/user/
 
 #### Firewall
 ##### What is a firewall?
+A firewall is a crucial component of network security.
+Iptables is a user-space utility program that allows a users to configure the IP packet filter rules of the Linux kernel firewall.
+
+Iptables got three different tables:
+1. Filter table: It is the default table for filtering packets.
+2. NAT table: It is used for Network Address Translation (NAT).
+3. Mangle table: It is used for specialized packet alteration.
+
+We will use the filter table to set up our firewall rules.
+The filter table has three built-in chains:
+1. INPUT chain: It is used to control the behavior for incoming packets.
+2. OUTPUT chain: It is used to control the behavior for outgoing packets.
+3. FORWARD chain: It is used to control the behavior for packets that are neither destined for the local host nor originate from the local host.
+
+We will mostly use the INPUT chain to control the behavior for incoming packets, so we can control which services are accessible from the internet.
+
+* install `iptables` if not already installed
+```bash
+sudo apt install iptables iptables-persistent
+```
+* list all iptables rules
+```bash
+sudo iptables -L
+```
+* list all iptables rules with line numbers
+```bash
+sudo iptables -L --line-numbers
+```
+* add ssh rule, so we can still connect to our server
+```bash
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+```
+* now we can block all incoming traffic
+```bash
+sudo iptables -P INPUT DROP
+```
+* delete an iptables rule
+```bash
+sudo iptables -D INPUT <number>
+```
+* save the iptables rules
+```bash
+sudo iptables-save > /etc/iptables/rules.v4
+```
+```bash
+sudo iptables-save > /etc/iptables/rules.v6
+```
+* if you only want to allow access from a specific IP address (your own), you can use the following command
+```bash
+sudo iptables -I INPUT -s <ip> -j ACCEPT
+```
+
+##### ufw
+<details>
+<summary>
+(old ufw stuff, I will remove this later, but it is still useful information, so I will keep it for now)
+</summary>
 A firewall is a crucial component of network security. 
 UFW (Uncomplicated Firewall) helps protect your system from unauthorized access, 
 controlling both incoming and outgoing network traffic based on your rules.
@@ -259,7 +316,6 @@ You want some services to be accessible from the internet,
 but some services should only be accessible from a local network or not accessible at all.
 For example, you can emulate a local network with a VPN, so you can access your services from anywhere.
 That's why we have set up WireGuard previously.
-
 
 * Install `ufw`
 ```bash
@@ -277,6 +333,7 @@ sudo ufw enable
 ```bash
 sudo ufw status
 ```
+</details>
 
 ### Install Docker 
 #### What is Docker?
