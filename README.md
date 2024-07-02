@@ -284,6 +284,10 @@ sudo iptables -L --line-numbers
 ```bash
 sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 ```
+* you should also add the following rule to allow initiated connections to answer back, for example, if you use sudo apt update
+```bash
+sudo iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+```
 * now we can block all incoming traffic
 ```bash
 sudo iptables -P INPUT DROP
